@@ -1,0 +1,46 @@
+name: healthz ci
+on: [pull_request]
+
+jobs:
+  build:
+    name: webapp_actions
+
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:latest
+        env:
+          MYSQL_ROOT_PASSWORD: 'root@2797'
+          DB_NAME: 'cloudA03'
+
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    env:
+      DB_HOST: localhost
+      DB_PORT: 3306
+      DB_NAME: cloudA03
+      DB_USERNAME: root
+      DB_PASSWORD: root@2797
+      DB_DIALECT: mysql
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: v16.x
+          cache : npm 
+
+      - name: Install node packages
+        run: npm install
+
+      - name: Install nodemon
+        run: npm install nodemon
+
+      - name: Run integration test
+        run: npm test
