@@ -47,7 +47,7 @@ const Assignment = sequelize.define('Assignment', {
     timestamps: true,
     createdAt: 'assignment_created',
     updatedAt: 'assignment_updated',
-    // readOnly: true, // This option is not standard in Sequelize, consider managing read-only at the application level
+
   
 });
 
