@@ -46,15 +46,11 @@ router.use(async (req, res, next) => {
 
 router.route("/v1/assignments")
     .get(assignmentController.getAllAssignments)
-<<<<<<< HEAD
     .post(assignmentController.postAssignment)
     .patch((req, res) => {
         res.status(405).send('Method Not Allowed');
     });
 
-=======
-    .post(assignmentController.postAssignment);
->>>>>>> c8870a0feb22fab287898606222fb93bc4ec4a69
 router
     .route("/v1/assignments/:id")
     .get(assignmentController.getAssignmentById)
