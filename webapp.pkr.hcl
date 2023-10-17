@@ -76,10 +76,10 @@ build {
       "sudo apt install nodejs npm -y",
       "sudo apt install -y unzip",
     ]
-
-    provisioner "file" {
+    
+  }
+   provisioner "file" {
       source      = "webapp.zip"
       destination = "~/"
     }
-  }
 }
