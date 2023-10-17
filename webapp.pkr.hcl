@@ -33,7 +33,7 @@ source "amazon-ebs" "my-ami" {
   region          = "${var.aws_region}"
 
   ami_users = [
-   "857650157256",
+    "857650157256",
   ]
 
   ami_regions = [
@@ -76,5 +76,10 @@ build {
       "sudo apt install nodejs npm -y",
       "sudo apt install -y unzip",
     ]
+
+    provisioner "file" {
+      source      = "webapp.zip"
+      destination = "~/"
+    }
   }
 }
