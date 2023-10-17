@@ -2,7 +2,7 @@ import { getAll, getAssignmentWithId, saveAssignment , deleteAssignment ,updateA
 import Sequelize from 'sequelize';
 import moment from 'moment';
 
-// Method to get all assignments
+// Method to get all assignment
 export const getAllAssignments = async (request, response) => {
     try {
         if (Object.keys(request.query).length > 0 || (request.body && Object.keys(request.body).length > 0)) {
@@ -39,7 +39,7 @@ export const getAssignmentById = async (request, response) => {
     }
 };
 
-// Method to post an assignment
+// Method to post an assignments
 export const postAssignment = async (request, response) => {
     console.log("User id for post " + request.user.id);
     console.log("User email for post " + request.user.email);

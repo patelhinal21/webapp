@@ -15,7 +15,7 @@ export const getAll = async (params) => {
       }
   };
   
-  // Service to get an assignment by ID
+  // Service to get an assignments by IDs
   export const getAssignmentWithId = async (id) => {
       try {
           const assignment = await Assignment.findByPk(id);  // Adapt based on your actual ORM or database method
@@ -69,7 +69,7 @@ export const deleteAssignment = async (id,UserId) => {
         throw error;
     }
 
-    // Check for unexpected fields
+
     const allowedFields = ['name', 'points', 'num_of_attempts', 'deadline'];
     const updatedFields = Object.keys(updatedData);
     const unexpectedFields = updatedFields.filter(field => !allowedFields.includes(field));
