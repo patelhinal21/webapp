@@ -41,7 +41,7 @@ variable "database_pass" {
 source "amazon-ebs" "my-ami" {
   ami_name        = "csye6225_ami-${formatdate("YYYY_MM_DD_hh_mm_ss", timestamp())}"
   ami_description = "ami from csye6225"
-  region          = var.aws_region
+  region          = "${var.aws_region}"
 
   ami_users = [
     "857650157256",
@@ -57,9 +57,9 @@ source "amazon-ebs" "my-ami" {
   }
 
   instance_type = "t2.micro"
-  source_ami    = var.source_ami
-  ssh_username  = var.ssh_username
-  subnet_id     = var.subnet_id
+  source_ami    = "${var.source_ami}"
+  ssh_username  = "${var.ssh_username}"
+  subnet_id     = "${var.subnet_id}"
 
   launch_block_device_mappings {
     device_name           = "/dev/xvda"
