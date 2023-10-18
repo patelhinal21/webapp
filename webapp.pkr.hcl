@@ -9,12 +9,12 @@ packer {
 
 variable "aws_region" {
   type    = string
-  default = "us-east-1"
+  #default = "us-east-1"
 }
 
 variable "source_ami" {
   type    = string
-  default = "ami-06db4d78cb1d3bbf9"
+  #default = "ami-06db4d78cb1d3bbf9"
 }
 
 variable "ssh_username" {
@@ -24,7 +24,18 @@ variable "ssh_username" {
 
 variable "subnet_id" {
   type    = string
-  default = "subnet-0e70e5264717e2b52"
+  #default = "subnet-0e70e5264717e2b52"
+}
+variable "database_user" {
+  type = string
+}
+
+variable "database_host" {
+  type = string
+}
+
+variable "database_pass" {
+  type = string
 }
 
 source "amazon-ebs" "my-ami" {
@@ -36,9 +47,9 @@ source "amazon-ebs" "my-ami" {
     "857650157256",
   ]
 
-  ami_regions = [
-    "us-east-1",
-  ]
+  # ami_regions = [
+  #   "us-east-1",
+  # ]
 
   aws_polling {
     delay_seconds = 120
@@ -64,19 +75,23 @@ build {
   ]
 
   provisioner "shell" {
-    environment_vars = [
-      "DEBIAN_FRONTEND=noninteractive",
-      "CHECKPOINT_DISABLE=1",
-    ]
+   environment_vars = [
+    "DEBIAN_FRONTEND=noninteractive",
+    "CHECKPOINT_DISABLE=1",
+    "DATABASE_USER=${var.database_user}", 
+    "DATABASE_HOST=${var.database_host}",
+    "DATABASE_PASS=${var.database_pass}"
+]
 
-    inline = [
-      "sudo apt-get update",
-      "sudo apt-get install mariadb-server -y",
-      "sudo systemctl start mariadb",
-      "sudo mysql -e \"ALTER USER 'root'@'localhost' IDENTIFIED BY 'root@2797'; flush privileges;\"",
-      "sudo apt install nodejs npm -y",
-      "sudo apt install -y unzip",
-    ]
+inline = [
+    "sudo apt-get update",
+    "sudo apt-get install mariadb-server -y",
+    "sudo systemctl start mariadb",
+    "sudo mysql -e \"ALTER USER '${DATABASE_USER}@${DATABASE_HOST}' IDENTIFIED BY '${DATABASE_PASS}'; flush privileges;\"",
+    "sudo apt install nodejs npm -y",
+    "sudo apt install -y unzip",
+]
+
   }
    provisioner "file" {
     source = "webapp.zip"
@@ -93,5 +108,7 @@ build {
       "npm install",
       "npm install nodemon",
     ]
+   
   }
+     
 }
