@@ -11,20 +11,20 @@ jobs:
       mysql:
         image: mysql:latest
         env:
-          MYSQL_ROOT_PASSWORD: 'root@2797'
-          DB_NAME: 'cloudA03'
+          MYSQL_ROOT_PASSWORD: '${{secrets.DB_PASSWORD}}'
+          DB_NAME: '${{secrets.DB_NAME}}'
 
         ports:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     env:
-      DB_HOST: localhost
-      DB_PORT: 3306
-      DB_NAME: cloudA03
-      DB_USERNAME: root
-      DB_PASSWORD: root@2797
-      DB_DIALECT: mysql
+      DB_HOST: ${{secrets.DB_HOST}}
+      DB_PORT: ${{secrets.DB_PORT}}
+      DB_NAME: ${{secrets.DB_NAME}}
+      DB_USERNAME: ${{secrets.DB_USERNAME}}
+      DB_PASSWORD: ${{secrets.DB_PASSWORD}}
+      DB_DIALECT: ${{secrets.DIALECT}}
 
     steps:
       - name: Checkout
