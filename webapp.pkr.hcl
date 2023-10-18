@@ -63,11 +63,6 @@ build {
     "source.amazon-ebs.my-ami",
   ]
 
-  provisioner "file" {
-    source      = "./webapp.zip"
-    destination = "/tmp/webapp.zip"
-  }
-
   provisioner "shell" {
     environment_vars = [
       "DEBIAN_FRONTEND=noninteractive",
@@ -82,5 +77,9 @@ build {
       "sudo apt install nodejs npm -y",
       "sudo apt install -y unzip",
     ]
+  }
+   provisioner "file" {
+    source = "webapp.zip"
+    destination = "~/"
   }
 }
