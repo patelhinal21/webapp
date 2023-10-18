@@ -73,7 +73,7 @@ build {
     "sudo apt-get update",
       "sudo apt-get install mariadb-server -y",
       "sudo systemctl start mariadb",
-      "sudo mysql -e \"GRANT ALL ON . TO 'root'@'localhost' IDENTIFIED BY 'root2797';\"",
+      "sudo mysql -e \"GRANT ALL ON *.* TO 'root'@'localhost' IDENTIFIED BY 'root2797';\"",
       "sudo apt install nodejs npm -y",
       "sudo apt install -y unzip",
     ]
