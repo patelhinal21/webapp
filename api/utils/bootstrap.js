@@ -51,12 +51,12 @@ await sequelize
       console.log(err)});
 
 importUsersFromCSV();
-        
+const path = process.env.DEFAULTUSERPATH
 async function importUsersFromCSV() {
-    const csvFilePath = '/opt/users.csv';
-    if (fs.existsSync(csvFilePath)) {
+    //const csvFilePath = '/opt/users.csv'; 
+    if (fs.existsSync(path)) {
     const data = [];
-    fs.createReadStream(csvFilePath)
+    fs.createReadStream(path)
         .pipe(csvParser())
         .on('data', (row) => {
             data.push(row);  
@@ -88,7 +88,7 @@ async function importUsersFromCSV() {
             console.log('CSV file processed');
         });
     } else {
-        console.error(`The file ${csvFilePath} does not exist.`);
+        console.error(`The file ${path} does not exist.`);
     }
 }
 

@@ -70,10 +70,10 @@ build {
     ]
 
     inline = [
-      "sudo apt-get update",
+    "sudo apt-get update",
       "sudo apt-get install mariadb-server -y",
       "sudo systemctl start mariadb",
-      "sudo mysql -e \"GRANT ALL ON *.* TO 'root'@'localhost' IDENTIFIED BY 'root@2797';\"",
+      "sudo mysql -e \"GRANT ALL ON . TO 'root'@'localhost' IDENTIFIED BY 'root2797';\"",
       "sudo apt install nodejs npm -y",
       "sudo apt install -y unzip",
     ]
@@ -81,5 +81,15 @@ build {
    provisioner "file" {
     source = "webapp.zip"
     destination = "~/"
+  }
+  provisioner "shell" {
+    inline = [
+    "echo webapp zip process",
+      "sudo ls -al",
+      "unzip webapp.zip -d webapp_ec2",
+      "sudo ls -al",
+      "cd webapp_ec2",
+      "npm install",
+      "npm install nodemon",
   }
 }
