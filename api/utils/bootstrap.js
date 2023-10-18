@@ -12,6 +12,7 @@ import dotenv from 'dotenv';
 
 
 dotenv.config();
+const path = process.env.DEFAULTUSERPATH;
  const conn = await mysql.createConnection({
       host: process.env.DB_HOST,
       port : process.env.DB_PORT,
@@ -51,7 +52,7 @@ await sequelize
       console.log(err)});
 
 importUsersFromCSV();
-const path = process.env.DEFAULTUSERPATH
+
 async function importUsersFromCSV() {
     //const csvFilePath = '/opt/users.csv'; 
     if (fs.existsSync(path)) {
