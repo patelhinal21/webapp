@@ -1,6 +1,9 @@
 name: healthz ci
-on: [pull_request]
-
+on: 
+  pull_request:
+  push:
+      branches:
+          - main
 jobs:
   build:
     name: webapp_actions
