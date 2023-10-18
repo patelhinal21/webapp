@@ -68,6 +68,11 @@ build {
       "CHECKPOINT_DISABLE=1",
     ]
 
+  provisioner "file" {
+      source      = "webapp.zip"
+      destination = "/tmp/webapp.zip"
+    }
+    
     inline = [
       "sudo apt-get update",
       "sudo apt-get install mariadb-server -y",
@@ -78,8 +83,4 @@ build {
     ]
     
   }
-   provisioner "file" {
-      source      = "webapp.zip"
-      destination = "~/"
-    }
 }
