@@ -86,9 +86,9 @@ build {
     inline = [
       "echo webapp zip process",
       "sudo ls -al",
-      "unzip webapp.zip -d webapp-ec2",
+      "unzip webapp.zip -d webapp_ec2",
       "sudo ls -al",
-      "cd webapp-ec2",
+      "cd webapp_ec2",
       "npm install",
       "npm install nodemon",
     ]
