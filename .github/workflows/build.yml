@@ -56,8 +56,8 @@ jobs:
           PKR_VAR_database_pass: ${{secrets.DB_PASSWORD}} 
           PKR_VAR_database_user: ${{secrets.DB_USERNAME}}
           PKR_VAR_database_host: ${{secrets.DB_HOST}} 
-          PKR_VAR_aws_region: "${{ secrets.AWS_REGION }}"
-          PKR_VAR_source_ami: "${{ secrets.SOURCE_AMI }} "
-          PKR_VAR_subnet_id: "${{ secrets.SUBNET_ID }}"
+          PKR_VAR_aws_region: "${{secrets.AWS_REGION}}"
+          PKR_VAR_source_ami: "${{secrets.SOURCE_AMI}} "
+          PKR_VAR_subnet_id: "${{secrets.SUBNET_ID}}"
         
     
