@@ -81,7 +81,6 @@ build {
       "sudo mysql -e \"GRANT ALL ON *.* TO 'root'@'localhost' IDENTIFIED BY 'root@2797';\"",
       "sudo apt install nodejs npm -y",
       "sudo apt install -y unzip",
-      "unzip /tmp/webapp.zip -d /var/www/html",
     ]
   }
 }
