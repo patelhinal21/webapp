@@ -8,12 +8,12 @@ packer {
 }
 
 variable "aws_region" {
-  type    = string
+  type = string
   #default = "us-east-1"
 }
 
 variable "source_ami" {
-  type    = string
+  type = string
   #default = "ami-06db4d78cb1d3bbf9"
 }
 
@@ -23,7 +23,7 @@ variable "ssh_username" {
 }
 
 variable "subnet_id" {
-  type    = string
+  type = string
   #default = "subnet-0e70e5264717e2b52"
 }
 variable "database_user" {
@@ -75,26 +75,26 @@ build {
   ]
 
   provisioner "shell" {
-   environment_vars = [
-    "DEBIAN_FRONTEND=noninteractive",
-    "CHECKPOINT_DISABLE=1",
-    "DATABASE_USER=${var.database_user}", 
-    "DATABASE_HOST=${var.database_host}",
-    "DATABASE_PASS=${var.database_pass}"
-]
+    environment_vars = [
+      "DEBIAN_FRONTEND=noninteractive",
+      "CHECKPOINT_DISABLE=1",
+      "DATABASE_USER=${var.database_user}",
+      "DATABASE_HOST=${var.database_host}",
+      "DATABASE_PASS=${var.database_pass}"
+    ]
 
-inline = [
-    "sudo apt-get update",
-    "sudo apt-get install mariadb-server -y",
-    "sudo systemctl start mariadb",
-    "sudo mysql -e \"ALTER USER '${var.database_user}'@'localhost' IDENTIFIED BY '${var.database_pass}'; flush privileges;\"",
-    "sudo apt install nodejs npm -y",
-    "sudo apt install -y unzip",
-]
+    inline = [
+      "sudo apt-get update",
+      "sudo apt-get install mariadb-server -y",
+      "sudo systemctl start mariadb",
+      "sudo mysql -e \"ALTER USER '${var.database_user}'@'localhost' IDENTIFIED BY '${var.database_pass}'; flush privileges;\"",
+      "sudo apt install nodejs npm -y",
+      "sudo apt install -y unzip",
+    ]
 
   }
-   provisioner "file" {
-    source = "webapp.zip"
+  provisioner "file" {
+    source      = "webapp.zip"
     destination = "~/"
   }
   provisioner "shell" {
@@ -108,7 +108,7 @@ inline = [
       "npm install",
       "npm install nodemon",
     ]
-   
+
   }
-     
+
 }
