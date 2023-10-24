@@ -90,6 +90,8 @@ build {
       # "sudo mysql -e \"ALTER USER '${var.database_user}'@'localhost' IDENTIFIED BY '${var.database_pass}'; flush privileges;\"",
       "sudo apt install nodejs npm -y",
       "sudo apt install -y unzip",
+      "sudo groupadd csye6225",
+      "sudo useradd -s /bin/false -g csye6225 -d /home/admin -m csye6225",
     ]
 
   }
@@ -103,8 +105,7 @@ build {
       "sudo ls -al",
       "unzip webapp.zip -d webapp_ec2",
       "sudo mv /home/admin/webapp_ec2/user.csv /opt",
-      "sudo ls -al",
-      "cd webapp_ec2",
+      "sudo mv /home/admin/webapp_ec2/webappSystemd.service /etc/systemd/system",
       "npm install",
       "npm install nodemon",
     ]

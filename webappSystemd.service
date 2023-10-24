@@ -1,0 +1,19 @@
+[Unit]
+
+Description=webapp
+After=network.target
+ConditionPathExists=/home/admin/webapp_ec2
+
+[Service] 
+
+Type=simple 
+EnvironmentFile=/etc/environment 
+User=csye6225 
+Group=csye6225  
+ExecStart=/usr/bin/node /home/admin/webapp_ec2/server.js 
+Restart=on-failure 
+RestartSec=3 
+
+[Install]
+
+WantedBy=multi-user.target
