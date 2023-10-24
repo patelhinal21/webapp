@@ -85,9 +85,9 @@ build {
 
     inline = [
       "sudo apt-get update",
-      "sudo apt-get install mariadb-server -y",
-      "sudo systemctl start mariadb",
-      "sudo mysql -e \"ALTER USER '${var.database_user}'@'localhost' IDENTIFIED BY '${var.database_pass}'; flush privileges;\"",
+      # "sudo apt-get install mariadb-server -y",
+      # "sudo systemctl start mariadb",
+      # "sudo mysql -e \"ALTER USER '${var.database_user}'@'localhost' IDENTIFIED BY '${var.database_pass}'; flush privileges;\"",
       "sudo apt install nodejs npm -y",
       "sudo apt install -y unzip",
     ]
