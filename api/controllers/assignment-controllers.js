@@ -45,14 +45,40 @@ export const postAssignment = async (request, response) => {
     console.log("User email for post " + request.user.email);
     console.log("Request body " + JSON.stringify(request.body));
     try {
-        const dateFormat = 'YYYY-MM-DD';  // Adjust this format as needed
-        if (!moment(request.body.deadline, dateFormat, true).isValid()) {
+        const requiredFields = ['name', 'points', 'num_of_attempts', 'deadline'];
+        const requestBody = request.body;
+        
+        // Validate that all expected fields are present and no extra fields are allowed
+        const allFieldsPresent = requiredFields.every(field => requestBody.hasOwnProperty(field) && requestBody[field] != null);
+        const noExtraFields = Object.keys(requestBody).every(field => requiredFields.includes(field));
+        if (!allFieldsPresent || !noExtraFields) {
+            console.log("Bad Request - All fields must be present and no extra fields are allowed");
+            return response.status(400).json({ error: "Bad Request - All fields must be present and no extra fields are allowed" });
+        }
+
+        // Validate that name is a string
+        if (typeof requestBody.name !== 'string') {
+            console.log("Bad Request - Name must be a string");
+            return response.status(400).json({ error: "Bad Request - Name must be a string" });
+        }
+
+        // Validate the date format
+        const dateFormat = 'YYYY-MM-DD';
+        if (!moment(requestBody.deadline, dateFormat, true).isValid()) {
             console.log("Bad Request - Invalid date format");
             return response.status(400).json({ error: "Bad Request - Invalid date format" });
         }
-        if (!Number.isInteger(request.body.points) || !Number.isInteger(request.body.num_of_attempts)) {
-            console.log("Bad Request - Points and Attempts should be integers");
-            return response.status(400).json({ error: "Bad Request - Points and Attempts should be integers" });
+
+        // Validate that points is an integer
+        if (!Number.isInteger(requestBody.points)) {
+            console.log("Bad Request - Points should be an integer");
+            return response.status(400).json({ error: "Bad Request - Points should be an integer" });
+        }
+
+        // Validate that number of attempts is an integer
+        if (!Number.isInteger(requestBody.num_of_attempts)) {
+            console.log("Bad Request - Number of Attempts should be an integer");
+            return response.status(400).json({ error: "Bad Request - Number of Attempts should be an integer" });
         }
         const newAssignment = {
             name: request.body.name,
@@ -107,29 +133,42 @@ export const updateAssignmentById = async (request, response) => {
         const UserId = request.user.id;
         const updatedData = request.body;
 
-        // Validate that all expected fields are present in the request body
         const requiredFields = ['name', 'points', 'num_of_attempts', 'deadline'];
-        const allFieldsPresent = requiredFields.every(field => 
-            Object.keys(updatedData).includes(field) && updatedData[field] != null
-        );
 
-        if (!allFieldsPresent) {
-            console.log("Bad Request - All fields must be present for an update");
-            return response.status(400).json({ error: "Bad Request - All fields must be present for an update" });
+        // Validate that all expected fields are present and no extra fields are allowed
+        const allFieldsPresent = requiredFields.every(field => updatedData.hasOwnProperty(field) && updatedData[field] != null);
+        const noExtraFields = Object.keys(updatedData).every(field => requiredFields.includes(field));
+
+        if (!allFieldsPresent || !noExtraFields) {
+            console.log("Bad Request - All fields must be present and no extra fields are allowed for an update");
+            return response.status(400).json({ error: "Bad Request - All fields must be present and no extra fields are allowed for an update" });
+        }
+
+        // Validate that name is a string
+        if (typeof updatedData.name !== 'string') {
+            console.log("Bad Request - Name must be a string");
+            return response.status(400).json({ error: "Bad Request - Name must be a string" });
         }
 
         // Validate the deadline is in the correct date format
-        const dateFormat = 'YYYY-MM-DD';  // Adjust this format as needed
+        const dateFormat = 'YYYY-MM-DD';
         if (!moment(updatedData.deadline, dateFormat, true).isValid()) {
             console.log("Bad Request - Invalid date format");
             return response.status(400).json({ error: "Bad Request - Invalid date format" });
         }
 
-        // Ensure that points and num_of_attempts are integers
-        if (!Number.isInteger(updatedData.points) || !Number.isInteger(updatedData.num_of_attempts)) {
-            console.log("Bad Request - Points and num_of_attempts should be integers");
-            return response.status(400).json({ error: "Bad Request - Points and num_of_attempts should be integers" });
+        // Separate validation for points
+        if (!Number.isInteger(updatedData.points)) {
+            console.log("Bad Request - Points should be an integer");
+            return response.status(400).json({ error: "Bad Request - Points should be an integer" });
         }
+
+        // Separate validation for number of attempts
+        if (!Number.isInteger(updatedData.num_of_attempts)) {
+            console.log("Bad Request - Number of Attempts should be an integer");
+            return response.status(400).json({ error: "Bad Request - Number of Attempts should be an integer" });
+        }
+
 
         const updatedAssignment = await updateAssignment(id, updatedData, UserId);
 

@@ -90,8 +90,10 @@ build {
       # "sudo mysql -e \"ALTER USER '${var.database_user}'@'localhost' IDENTIFIED BY '${var.database_pass}'; flush privileges;\"",
       "sudo apt install nodejs npm -y",
       "sudo apt install -y unzip",
-      "sudo groupadd csye6225",
-      "sudo useradd -s /bin/false -g csye6225 -d /home/admin -m csye6225",
+      "sudo groupadd csye6225_users",
+      "sudo useradd -s /bin/false -g csye6225_users -d /opt/webapp -m csye6225_hinal",
+      "sudo chown -R csye6225_hinal:csye6225_users /opt/webapp"
+      "sudo chmod g+x /opt/webapp"
     ]
 
   }
@@ -103,13 +105,18 @@ build {
     inline = [
       "echo webapp zip process",
       "sudo ls -al",
-      "unzip webapp.zip -d webapp_ec2",
-      "cd webapp_ec2",
-      "sudo mv /home/admin/webapp_ec2/user.csv /opt",
-      "sudo mv /home/admin/webapp_ec2/webappSystemd.service /etc/systemd/system",
-      "npm install",
+      "sudo cp webapp.zip /opt/webapp",
+      "cd /opt/webapp",
+      "sudo unzip webapp.zip",
+      "sudo mv user.csv /opt",
+      "sudo mv webappSystemd.service /etc/systemd/system",
+      "sudo npm install",
+      "sudo systemctl daemon-reload",
+      "sudo systemctl enable webappSystemd",
+      "sudo systemctl start webappSystemd",
     ]
-
+     
+    
   }
 
 }
