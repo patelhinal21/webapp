@@ -92,8 +92,8 @@ build {
       "sudo apt install -y unzip",
       "sudo groupadd csye6225_users",
       "sudo useradd -s /bin/false -g csye6225_users -d /opt/webapp -m csye6225_hinal",
-      "sudo chown -R csye6225_hinal:csye6225_users /opt/webapp"
-      "sudo chmod g+x /opt/webapp"
+      "sudo chown -R csye6225_hinal:csye6225_users /opt/webapp",
+      "sudo chmod g+x /opt/webapp",
     ]
 
   }
@@ -115,8 +115,8 @@ build {
       "sudo systemctl enable webappSystemd",
       "sudo systemctl start webappSystemd",
     ]
-     
-    
+
+
   }
 
 }
