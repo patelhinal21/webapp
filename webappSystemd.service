@@ -8,10 +8,10 @@ ConditionPathExists=/opt/webapp
 
 Type=simple 
 EnvironmentFile=/etc/environment 
-User=csye6225 
-Group=csye6225  
+User=csye6225_hinal
+Group=csye6225_users  
 ExecStart=/usr/bin/node /opt/webapp/server.js 
-Restart=on-failure 
+Restart=always 
 RestartSec=3 
 
 [Install]
