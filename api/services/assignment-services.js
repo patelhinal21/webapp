@@ -28,10 +28,10 @@ export const getAll = async (params) => {
   
   
 export const saveAssignment = async (assignmentData) => {
-    console.log('Assignment Data Before Save:', assignmentData); 
+
     try {
         const assignment = await Assignment.create(assignmentData);
-        console.log('Assignment Data After Save:', assignment.toJSON()); 
+     
         return assignment;
     } catch (error) {
         console.error("Error while saving the assignment:", error);

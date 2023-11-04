@@ -6,12 +6,29 @@ import mysql from 'mysql2/promise';
 import defineUser from '../models/users-models.js';
 import defineAssignment from '../models/assignment-models.js'; 
 import dotenv from 'dotenv';
-
+import pino from 'pino';
 
 
 
 
 dotenv.config();
+
+const logger = pino({
+    level: 'info',
+    timestamp: pino.stdTimeFunctions.isoTime,
+    formatters: {
+      level: (label) => {
+        return { level: label.toUpperCase() };
+      },
+    },
+    transport: {
+      target: 'pino-pretty',
+      options: {
+        colorize: true, // Enable colorization
+      },
+    },
+  });
+  
 const path = process.env.DEFAULTUSERPATH;
  const conn = await mysql.createConnection({
       host: process.env.DB_HOST,
@@ -28,16 +45,17 @@ const sequelize = new Sequelize(
       process.env.DB_PASSWORD,
       {
             host:process.env.DB_HOST,
-            dialect : "mysql"
+            dialect : "mysql",
+            logging: false,
       }
 );
 try {
     
      await sequelize.authenticate();
-      console.log('Connection has been established successfully.');}
-      catch (error) {
-            console.error('Unable to initialize the database:', error);
-        }
+     logger.info('Connection has been established successfully.');
+    } catch (error) {
+      logger.error('Unable to initialize the database:', error);
+    }
 
 const Users = defineUser(sequelize);
 const Assignment = defineAssignment(sequelize);
@@ -54,42 +72,38 @@ await sequelize
 importUsersFromCSV();
 
 async function importUsersFromCSV() {
-    //const csvFilePath = '/opt/users.csv'; 
     if (fs.existsSync(path)) {
-    const data = [];
-    fs.createReadStream(path)
-        .pipe(csvParser())
-        .on('data', (row) => {
-            data.push(row);  
-        })
-        .on('end', async () => {
-            for (const row of data) {  
-                try {
-                    console.log('Parsed CSV row:', row);
-                const hashedPassword = await bcrypt.hash(row.password, 10);
-                
-                const existingUser = await Users.findOne({ where: { email: row.email } });
+        const data = [];
+        fs.createReadStream(path)
+            .pipe(csvParser())
+            .on('data', (row) => {
+                data.push(row);
+            })
+            .on('end', async () => {
+                for (const row of data) {
+                    try {
+                        const hashedPassword = await bcrypt.hash(row.password, 10);
+                        const existingUser = await Users.findOne({ where: { email: row.email } });
 
-                if (!existingUser) {
-                    await Users.create({
-                        first_name: row.first_name,
-                        last_name: row.last_name,
-                        email: row.email,
-                        password: hashedPassword,
-                    });
-                    console.log(`User ${row.email} created`);
-                } else {
-                    console.log(`User with email ${row.email} already exists.`);
+                        if (!existingUser) {
+                            await Users.create({
+                                first_name: row.first_name,
+                                last_name: row.last_name,
+                                email: row.email,
+                                password: hashedPassword,
+                            });
+                            logger.info(`User ${row.email} created`);
+                        } else {
+                            logger.info(`User with email ${row.email} already exists.`);
+                        }
+                    } catch (error) {
+                        logger.error('Error inserting user:', error);
+                    }
                 }
-            } catch (error) {
-                console.error('Error inserting user:', error);
-            }
-        }
-   
-            console.log('CSV file processed');
-        });
+                logger.info('CSV file processed');
+            });
     } else {
-        console.error(`The file ${path} does not exist.`);
+        logger.error(`The file ${path} does not exist.`);
     }
 }
 

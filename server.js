@@ -3,7 +3,7 @@ import app from './api/app.js'
 const port = 9000;
 
 app.listen(9000, () => {
-    console.log(`Server is running at ${port}.`);
+    //console.log(`Server is running at ${port}.`);
 });
 
 

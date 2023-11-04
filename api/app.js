@@ -4,11 +4,72 @@ import defineAssignment from '../api/models/assignment-models.js';
 import router from './routes/assignment-routes.js';
 import dotenv from 'dotenv';
 import { Sequelize } from 'sequelize';
+import pino from 'pino';
+import path from 'path';
+
 
 dotenv.config();
 
 const app = express();
 app.use(express.json()); 
+
+
+
+function getStackInfo() {
+  const stacklist = new Error().stack.split('\n').slice(3);
+  // Use the first non-internal stack entry
+  for (let stack of stacklist) {
+    if (stack.includes('node_modules') || stack.includes('internal')) continue; // skip node_modules and internal paths
+    const stackInfo = /at (.+) \((.+):(\d+):(\d+)\)$/.exec(stack) || /at (.+):(\d+):(\d+)$/.exec(stack);
+    if (stackInfo) {
+      let method, filePath, line, column;
+      if (stackInfo.length === 5) {
+        [, method, filePath, line, column] = stackInfo;
+      } else {
+        [, filePath, line, column] = stackInfo;
+        method = filePath.split('/').pop();
+      }
+      filePath = path.relative(process.cwd(), filePath); // make the path relative
+      return { method, filePath, line, column };
+    }
+  }
+  return {};
+}
+
+const logger = pino({
+  level: 'info',
+  timestamp: pino.stdTimeFunctions.isoTime,
+  formatters: {
+    level: (label) => {
+      return { level: label.toUpperCase() };
+    },
+  },
+  transport: {
+    target: 'pino-pretty',
+    options: {
+      colorize: true, // Enable colorization
+    },
+  },
+});
+
+
+function customLogger(logger, level, message, error) {
+  const { method, filePath, line, column } = getStackInfo();
+  const logObject = {
+    level: level.toString(),
+    message,
+    method,
+    filePath,
+    line: parseInt(line), // Ensure it's a number
+    column: parseInt(column), // Ensure it's a number
+    time: new Date().toISOString(),
+  };
+  if (error) logObject.error = error.stack || error.toString();
+
+  logger[level](logObject);
+}
+
+
 
 const sequelize = new Sequelize(
   process.env.DB_NAME,
@@ -20,49 +81,34 @@ const sequelize = new Sequelize(
   }
 );
 
-function methodNotAllowed(allowed) {
-      return (req, res, next) => {
-        if (Object.keys(req.query).length > 0 || req.body && Object.keys(req.body).length > 0)  {
-          return res.status(400).json({message: "Bad Request"});
-        }
-        if(!allowed.includes(req.method)) { 
-          return res.status(405).json({ message: "Method Not Allowed" });
-        }
-    
-      else {
-          next();
-      }
-    
-      }
-    }
-    
-function invalidHandler (req, res, next) {
-        return res.status(404).json(), console.log("Not Found");
-      };
-
       app.all('/healthz', async (req, res) => {
         res.set('Cache-control', 'no-cache')  
         if (req.method !== 'GET') {
+          customLogger(logger, 'info', 'Health check successful');
           return res.status(405).send('Method Not Allowed');
         }
         const bodyLength = parseInt(req.get('Content-Length') || '0', 10);
            if (Object.keys(req.query).length > 0 || bodyLength > 0) {
+            customLogger(logger, 'error', 'Bad Request: Unexpected query parameters or body content');
               res.status(400).send() // badrequest
            } 
            try {
             await sequelize.authenticate();
-            return res.status(200).send(); // connected
+            customLogger(logger, 'info', 'Health check successful');
+            return res.status(200).send('Healthz check successful');
         } catch (error) {
-            console.error('Unable to connect to the database:', error);
+          customLogger(logger, 'error', 'Health check failed - Unable to connect to the database', error);
             return res.status(503).send(); // service unavailable
         }
     });  
 
 app.use('/',router);
 app.use((req, res, next) => {
+  customLogger(logger, 'error', 'Route does not exist');
       res.status(404).send('Sorry, that route does not exist.');
   });
 
 
 export default app;
+
 
