@@ -6,12 +6,14 @@ import dotenv from 'dotenv';
 import { Sequelize } from 'sequelize';
 import pino from 'pino';
 import path from 'path';
+import logger from '../logger.js'; 
 
 
 dotenv.config();
 
 const app = express();
 app.use(express.json()); 
+
 
 
 
@@ -36,21 +38,7 @@ function getStackInfo() {
   return {};
 }
 
-const logger = pino({
-  level: 'info',
-  timestamp: pino.stdTimeFunctions.isoTime,
-  formatters: {
-    level: (label) => {
-      return { level: label.toUpperCase() };
-    },
-  },
-  transport: {
-    target: 'pino-pretty',
-    options: {
-      colorize: true, // Enable colorization
-    },
-  },
-});
+
 
 
 function customLogger(logger, level, message, error) {
@@ -81,26 +69,52 @@ const sequelize = new Sequelize(
   }
 );
 
-      app.all('/healthz', async (req, res) => {
-        res.set('Cache-control', 'no-cache')  
-        if (req.method !== 'GET') {
-          customLogger(logger, 'info', 'Health check successful');
+    //   app.all('/healthz', async (req, res) => {
+    //     res.set('Cache-control', 'no-cache')  
+    //     if (req.method !== 'GET') {
+    //       customLogger(logger, 'info', 'Method Not Allowed');
+    //       return res.status(405).send('Method Not Allowed');
+    //     }
+    //     const bodyLength = parseInt(req.get('Content-Length') || '0', 10);
+    //        if (Object.keys(req.query).length > 0 || bodyLength > 0) {
+    //         customLogger(logger, 'error', 'Bad Request: Unexpected query parameters or body content');
+    //           res.status(400).send() // badrequest
+    //        } 
+    //        try {
+    //         await sequelize.authenticate();
+    //         customLogger(logger, 'info', 'Health check successful');
+    //         return res.status(200).send('Healthz check successful');
+    //     } catch (error) {
+    //       customLogger(logger, 'error', 'Health check failed - Unable to connect to the database', error);
+    //         return res.status(503).send(); // service unavailable
+    //     }
+    // });  
+
+    app.all('/healthz', async (req, res) => {
+      res.set('Cache-control', 'no-cache');  
+      if (req.method !== 'GET') {
+          customLogger(logger, 'info', 'Health check - method not allowed');
           return res.status(405).send('Method Not Allowed');
-        }
-        const bodyLength = parseInt(req.get('Content-Length') || '0', 10);
-           if (Object.keys(req.query).length > 0 || bodyLength > 0) {
-            customLogger(logger, 'error', 'Bad Request: Unexpected query parameters or body content');
-              res.status(400).send() // badrequest
-           } 
-           try {
-            await sequelize.authenticate();
-            customLogger(logger, 'info', 'Health check successful');
-            return res.status(200).send('Healthz check successful');
-        } catch (error) {
+      }
+      const bodyLength = parseInt(req.get('Content-Length') || '0', 10);
+      if (Object.keys(req.query).length > 0 || bodyLength > 0) {
+          customLogger(logger, 'error', 'Bad Request: Unexpected query parameters or body content');
+          return res.status(400).send('Bad Request: Unexpected query parameters or body content');
+      }
+      try {
+          await sequelize.authenticate();
+          customLogger(logger, 'info', 'Health check successful');
+          return res.status(200).send('Healthz check successful');
+      } catch (error) {
           customLogger(logger, 'error', 'Health check failed - Unable to connect to the database', error);
-            return res.status(503).send(); // service unavailable
-        }
-    });  
+          // If headers are already sent, you cannot send another response.
+          // You must ensure the code doesn't reach here if a response has already been sent.
+          if (!res.headersSent) {
+              return res.status(503).send('Service Unavailable');
+          }
+      }
+  });
+  
 
 app.use('/',router);
 app.use((req, res, next) => {
@@ -110,5 +124,6 @@ app.use((req, res, next) => {
 
 
 export default app;
+
 
 

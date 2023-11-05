@@ -3,22 +3,24 @@ import Sequelize from 'sequelize';
 import moment from 'moment';
 import pino from 'pino';
 import path from 'path'; 
+import logger from '../../logger.js'; 
 
-const logger = pino({
-  level: 'info',
-  timestamp: pino.stdTimeFunctions.isoTime,
-  formatters: {
-    level: (label) => {
-      return { level: label.toUpperCase() };
-    },
-  },
-  transport: {
-    target: 'pino-pretty',
-    options: {
-      colorize: true, // Enable colorization
-    },
-  },
-});
+// const logger = pino({
+//   level: 'info',
+//   timestamp: pino.stdTimeFunctions.isoTime,
+//   formatters: {
+//     level: (label) => {
+//       return { level: label.toUpperCase() };
+//     },
+//   },
+//   transport: {
+//     target: 'pino-pretty',
+//     options: {
+//       colorize: true, // Enable colorization
+//     },
+//   },
+// });
+
 function getStackInfo() {
   const stacklist = new Error().stack.split('\n').slice(3);
   // Use the first non-internal stack entry
