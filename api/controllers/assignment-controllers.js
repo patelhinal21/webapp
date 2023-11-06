@@ -3,7 +3,8 @@ import Sequelize from 'sequelize';
 import moment from 'moment';
 import pino from 'pino';
 import path from 'path'; 
-import node from 'node-statsd';
+import { StatsD } from 'node-statsd';
+
 
 const statsdClient = new StatsD({
   host: 'localhost', // or wherever your StatsD server is located

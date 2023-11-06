@@ -6,7 +6,8 @@ import dotenv from 'dotenv';
 import { Sequelize } from 'sequelize';
 import pino from 'pino';
 import path from 'path';
-import node from 'node-statsd';
+import { StatsD } from 'node-statsd';
+
 //import logger from '../logger.js'; 
 
 
