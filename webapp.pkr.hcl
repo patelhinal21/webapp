@@ -99,8 +99,8 @@ build {
       "echo webapp zip process",
       "sudo ls -al",
       "sudo cp webapp.zip /opt/webapp",
-      "wget https://amazoncloudwatch-agent.s3.amazonaws.com/debian/amd64/latest/amazon-cloudwatch-agent.deb"
-      "sudo dpkg -i -E ./amazon-cloudwatch-agent.deb"
+      "wget https://amazoncloudwatch-agent.s3.amazonaws.com/debian/amd64/latest/amazon-cloudwatch-agent.deb",
+      "sudo dpkg -i -E ./amazon-cloudwatch-agent.deb",
       "cd /opt/webapp",
       "sudo unzip webapp.zip",
       "sudo mv user.csv /opt",
