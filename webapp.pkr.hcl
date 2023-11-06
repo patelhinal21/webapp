@@ -9,12 +9,12 @@ packer {
 
 variable "aws_region" {
   type = string
-  #default = "us-east-1"
+
 }
 
 variable "source_ami" {
   type = string
-  #default = "ami-06db4d78cb1d3bbf9"
+
 }
 
 variable "ssh_username" {
@@ -24,7 +24,7 @@ variable "ssh_username" {
 
 variable "subnet_id" {
   type = string
-  #default = "subnet-0e70e5264717e2b52"
+
 }
 variable "database_user" {
   type = string
@@ -46,10 +46,6 @@ source "amazon-ebs" "my-ami" {
   ami_users = [
     "857650157256",
   ]
-
-  # ami_regions = [
-  #   "us-east-1",
-  # ]
 
   aws_polling {
     delay_seconds = 120
@@ -103,6 +99,8 @@ build {
       "echo webapp zip process",
       "sudo ls -al",
       "sudo cp webapp.zip /opt/webapp",
+      "wget https://amazoncloudwatch-agent.s3.amazonaws.com/debian/amd64/latest/amazon-cloudwatch-agent.deb"
+      "sudo dpkg -i -E ./amazon-cloudwatch-agent.deb"
       "cd /opt/webapp",
       "sudo unzip webapp.zip",
       "sudo mv user.csv /opt",

@@ -6,15 +6,36 @@ import dotenv from 'dotenv';
 import { Sequelize } from 'sequelize';
 import pino from 'pino';
 import path from 'path';
-import logger from '../logger.js'; 
+import node from 'node-statsd';
+//import logger from '../logger.js'; 
 
 
 dotenv.config();
 
 const app = express();
+const statsdClient = new StatsD({
+  host: 'localhost', // or wherever your StatsD server is located
+  port: 8125, // default port for StatsD
+});
+
 app.use(express.json()); 
 
-
+const logger = pino({
+  level: 'info',
+  timestamp: pino.stdTimeFunctions.isoTime,
+  base: null, // 
+  formatters: {
+    level: (label) => {
+      return { level: label.toUpperCase() };
+    },
+  },
+  // transport: {
+  //   target: 'pino-pretty',
+  //   options: {
+  //     colorize: true, // Enable colorization
+  //   },
+  // },
+});
 
 
 function getStackInfo() {
@@ -41,16 +62,15 @@ function getStackInfo() {
 
 
 
+
 function customLogger(logger, level, message, error) {
   const { method, filePath, line, column } = getStackInfo();
   const logObject = {
-    level: level.toString(),
     message,
     method,
     filePath,
     line: parseInt(line), // Ensure it's a number
     column: parseInt(column), // Ensure it's a number
-    time: new Date().toISOString(),
   };
   if (error) logObject.error = error.stack || error.toString();
 
@@ -91,6 +111,7 @@ const sequelize = new Sequelize(
     // });  
 
     app.all('/healthz', async (req, res) => {
+      statsdClient.increment('endpoint.healthz.called');
       res.set('Cache-control', 'no-cache');  
       if (req.method !== 'GET') {
           customLogger(logger, 'info', 'Health check - method not allowed');

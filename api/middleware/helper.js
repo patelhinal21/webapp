@@ -3,23 +3,25 @@ import defineUser from '../models/users-models.js';
 import sequelize from '../utils/bootstrap.js';
 import pino from 'pino';
 import path from 'path'; // Ensure you have imported path
-import  logger from '../../logger.js'; 
+//import  logger from '../../logger.js'; 
 
-// const logger = pino({
-//   level: 'info',
-//   timestamp: pino.stdTimeFunctions.isoTime,
-//   formatters: {
-//     level: (label) => {
-//       return { level: label.toUpperCase() };
-//     },
-//   },
-//   transport: {
-//     target: 'pino-pretty',
-//     options: {
-//       colorize: true, // Enable colorization
-//     },
-//   },
-// });
+const logger = pino({
+  level: 'info',
+  timestamp: pino.stdTimeFunctions.isoTime,
+  base: null, // 
+  formatters: {
+    level: (label) => {
+      return { level: label.toUpperCase() };
+    },
+  },
+  // transport: {
+  //   target: 'pino-pretty',
+  //   options: {
+  //     colorize: true, // Enable colorization
+  //   },
+  // },
+});
+
 function getStackInfo() {
   const stacklist = new Error().stack.split('\n').slice(3);
   // Use the first non-internal stack entry
@@ -41,16 +43,15 @@ function getStackInfo() {
   return {};
 }
 
+
 function customLogger(logger, level, message, error) {
   const { method, filePath, line, column } = getStackInfo();
   const logObject = {
-    level: level.toString(),
     message,
     method,
     filePath,
     line: parseInt(line), // Ensure it's a number
     column: parseInt(column), // Ensure it's a number
-    time: new Date().toISOString(),
   };
   if (error) logObject.error = error.stack || error.toString();
 

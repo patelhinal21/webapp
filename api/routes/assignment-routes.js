@@ -1,14 +1,30 @@
 import express from 'express';
 import * as helperFunc from '../middleware/helper.js';
 import * as assignmentController from '../controllers/assignment-controllers.js';
-import logger from '../../logger.js'
+import pino from 'pino';
+//import logger from '../../logger.js'
 import path from 'path'; // Import path to resolve file paths
 
 const router = express.Router();
 const app = express();
 
 
-
+const logger = pino({
+  level: 'info',
+  timestamp: pino.stdTimeFunctions.isoTime,
+  base: null, // 
+  formatters: {
+    level: (label) => {
+      return { level: label.toUpperCase() };
+    },
+  },
+  // transport: {
+  //   target: 'pino-pretty',
+  //   options: {
+  //     colorize: true, // Enable colorization
+  //   },
+  // },
+});
 
 function getStackInfo() {
     const stacklist = new Error().stack.split('\n').slice(3);
@@ -31,22 +47,20 @@ function getStackInfo() {
     return {};
   }
   
-  function customLogger(logger, level, message, error) {
-    const { method, filePath, line, column } = getStackInfo();
-    const logObject = {
-      level: level.toString(),
-      message,
-      method,
-      filePath,
-      line: parseInt(line), // Ensure it's a number
-      column: parseInt(column), // Ensure it's a number
-      time: new Date().toISOString(),
-    };
-    if (error) logObject.error = error.stack || error.toString();
-  
-    logger[level](logObject);
-  }
-  
+ 
+function customLogger(logger, level, message, error) {
+  const { method, filePath, line, column } = getStackInfo();
+  const logObject = {
+    message,
+    method,
+    filePath,
+    line: parseInt(line), // Ensure it's a number
+    column: parseInt(column), // Ensure it's a number
+  };
+  if (error) logObject.error = error.stack || error.toString();
+
+  logger[level](logObject);
+}
 
   router.use(async (req, res, next) => {
     const authHeader = req.headers.authorization;

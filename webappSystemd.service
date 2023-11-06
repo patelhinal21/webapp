@@ -13,6 +13,8 @@ Group=csye6225_users
 ExecStart=/usr/bin/node /opt/webapp/server.js 
 Restart=always 
 RestartSec=3 
+StandardOutput=append:/var/log/myapp.log
+StandardError=append:/var/log/myapp_error.log
 
 [Install]
 

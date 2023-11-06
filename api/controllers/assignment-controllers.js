@@ -3,23 +3,29 @@ import Sequelize from 'sequelize';
 import moment from 'moment';
 import pino from 'pino';
 import path from 'path'; 
-import logger from '../../logger.js'; 
+import node from 'node-statsd';
 
-// const logger = pino({
-//   level: 'info',
-//   timestamp: pino.stdTimeFunctions.isoTime,
-//   formatters: {
-//     level: (label) => {
-//       return { level: label.toUpperCase() };
-//     },
-//   },
-//   transport: {
-//     target: 'pino-pretty',
-//     options: {
-//       colorize: true, // Enable colorization
-//     },
-//   },
-// });
+const statsdClient = new StatsD({
+  host: 'localhost', // or wherever your StatsD server is located
+  port: 8125, // default port for StatsD
+});
+
+const logger = pino({
+  level: 'info',
+  timestamp: pino.stdTimeFunctions.isoTime,
+  base: null, // 
+  formatters: {
+    level: (label) => {
+      return { level: label.toUpperCase() };
+    },
+  },
+  // transport: {
+  //   target: 'pino-pretty',
+  //   options: {
+  //     colorize: true, // Enable colorization
+  //   },
+  // },
+});
 
 function getStackInfo() {
   const stacklist = new Error().stack.split('\n').slice(3);
@@ -45,20 +51,18 @@ function getStackInfo() {
 function customLogger(logger, level, message, error) {
   const { method, filePath, line, column } = getStackInfo();
   const logObject = {
-    level: level.toString(),
     message,
     method,
     filePath,
     line: parseInt(line), // Ensure it's a number
     column: parseInt(column), // Ensure it's a number
-    time: new Date().toISOString(),
   };
   if (error) logObject.error = error.stack || error.toString();
 
   logger[level](logObject);
 }
-
 export const getAllAssignments = async (request, response) => {
+  statsdClient.increment('api.calls.getAllAssignments');
     try {
         if (Object.keys(request.query).length > 0 || (request.body && Object.keys(request.body).length > 0)) {
             customLogger(logger, 'error', "Bad Request - Additional parameters or body content not allowed in GET request");
@@ -77,6 +81,7 @@ export const getAllAssignments = async (request, response) => {
 // Method to get an assignment by ID
 
 export const getAssignmentById = async (request, response) => {
+  statsdClient.increment('api.calls.getAssignmentById');
     try {
         if (request.body && Object.keys(request.body).length > 0) {
             customLogger(logger, 'error', "Bad Request - Body content not allowed in GET request");
@@ -101,6 +106,7 @@ export const getAssignmentById = async (request, response) => {
 
 // Method to post an assignments
 export const postAssignment = async (request, response) => {
+  statsdClient.increment('api.calls.postAssignment');
     try {
       const requiredFields = ['name', 'points', 'num_of_attempts', 'deadline'];
       const requestBody = request.body;
@@ -159,6 +165,7 @@ export const postAssignment = async (request, response) => {
   };
 
   export const deleteAssignmentById = async (request, response) => {
+    statsdClient.increment('api.calls.deleteAssignmentById');
     try {
         // Check if request body is empty
         if (request.body && Object.keys(request.body).length > 0) {
@@ -185,6 +192,7 @@ export const postAssignment = async (request, response) => {
 
 // Method to update an assignment
 export const updateAssignmentById = async (request, response) => {
+  statsdClient.increment('api.calls.updateAssignmentById');
     try {
         const id = request.params.id;
         const UserId = request.user.id; // Ensure this is being set through your authentication middleware

@@ -7,28 +7,29 @@ import defineUser from '../models/users-models.js';
 import defineAssignment from '../models/assignment-models.js'; 
 import dotenv from 'dotenv';
 import pino from 'pino';
-import logger from '../../logger.js';
+//import logger from '../../logger.js';
 
 
 
 
 dotenv.config();
 
-// const logger = pino({
-//     level: 'info',
-//     timestamp: pino.stdTimeFunctions.isoTime,
-//     formatters: {
-//       level: (label) => {
-//         return { level: label.toUpperCase() };
-//       },
-//     },
-//     transport: {
-//       target: 'pino-pretty',
-//       options: {
-//         colorize: true, // Enable colorization
-//       },
-//     },
-//   });
+const logger = pino({
+    level: 'info',
+    timestamp: pino.stdTimeFunctions.isoTime,
+    base: null, // 
+    formatters: {
+      level: (label) => {
+        return { level: label.toUpperCase() };
+      },
+    },
+    // transport: {
+    //   target: 'pino-pretty',
+    //   options: {
+    //     colorize: true, // Enable colorization
+    //   },
+    // },
+  });
   
 const path = process.env.DEFAULTUSERPATH;
  const conn = await mysql.createConnection({
