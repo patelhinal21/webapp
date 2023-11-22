@@ -1,4 +1,4 @@
-import { getAll, fetchAssignmentById, countUserSubmissions, saveAssignment , deleteAssignment ,updateAssignment ,getAllUsers } from '../services/assignment-services.js';
+import { getAll, fetchAssignmentById, countUserSubmissions, createSubmission, saveAssignment , deleteAssignment ,updateAssignment ,getAllUsers } from '../services/assignment-services.js';
 import Sequelize from 'sequelize';
 import moment from 'moment';
 import pino from 'pino';
@@ -157,12 +157,14 @@ export const postAssignment = async (request, response) => {
         customLogger(logger, 'error', "Bad Request - Number of Attempts should be an integer");
         return response.status(400).json({ error: "Bad Request - Number of Attempts should be an integer" });
       }
-  
+      const adjustedDeadline = moment(requestBody.deadline).utc().add(1, 'days').startOf('day').toISOString();
+
+    
       const newAssignment = {
         name: requestBody.name,
         points: requestBody.points,
         num_of_attempts: requestBody.num_of_attempts,
-        deadline: requestBody.deadline,
+        deadline: adjustedDeadline,
         UserId: request.user.id // Ensure this is set correctly based on your authentication logic
       };
   
@@ -282,49 +284,51 @@ export async function getUsers(req, res,next) {
     }
   
   }
+ 
   export const postSubmission = async (request, response) => {
     try {
-      const { assignmentId, submissionUrl } = request.body;
-  
-      // Fetch the assignment to check deadline and attempts
-      const assignment = await fetchAssignmentById(assignmentId);
-      if (!assignment) {
-          customLogger(logger, 'error', "Not Found - Assignment not found");
-          return response.status(404).json({ error: "Assignment not found" });
-      }
-  
-      // Check if the submission is within the due date
-      // Adjust moment to consider the end of the day for the deadline
-      if (moment().isAfter(moment(assignment.deadline).endOf('day'))) {
-          customLogger(logger, 'error', "Bad Request - Submission deadline has passed");
-          return response.status(400).json({ error: "Submission deadline has passed" });
-      }
-  
-      // Check if the user has attempts left
-      const submissionCount = await countUserSubmissions(assignmentId);
-      if (submissionCount >= assignment.num_of_attempts) {
-          customLogger(logger, 'error', "Bad Request - Maximum submission attempts exceeded");
-          return response.status(400).json({ error: "Maximum submission attempts exceeded" });
-      }
-  
-      // Create the submission
-      const newSubmission = {
-          assignmentId,
-          submissionUrl,
-      };
-  
-      const savedSubmission = await createSubmission(newSubmission);
-      customLogger(logger, 'info', "New submission created successfully");
-      response.status(201).json(savedSubmission);
-  
+        const { assignmentId, submissionUrl } = request.body;
+
+        // Fetch the assignment to check deadline and attempts
+        const assignment = await fetchAssignmentById(assignmentId);
+        if (!assignment) {
+            customLogger(logger, 'error', "Not Found - Assignment not found");
+            return response.status(404).json({ error: "Assignment not found" });
+        }
+
+        // Check if the submission is within the due date
+        // Adjust moment to consider the end of the day for the deadline
+        if (moment().isAfter(moment(assignment.deadline).endOf('day'))) {
+            customLogger(logger, 'error', "Bad Request - Submission deadline has passed");
+            return response.status(400).json({ error: "Submission deadline has passed" });
+        }
+
+        // Check if the user has attempts left
+        const submissionCount = await countUserSubmissions(assignmentId);
+        if (submissionCount >= assignment.num_of_attempts) {
+            customLogger(logger, 'error', "Bad Request - Maximum submission attempts exceeded");
+            return response.status(400).json({ error: "Maximum submission attempts exceeded" });
+        }
+
+        // Create the submission
+        const newSubmission = {
+            assignmentId,
+            submissionUrl,
+        };
+
+        const savedSubmission = await createSubmission(newSubmission);
+        customLogger(logger, 'info', "New submission created successfully");
+        response.status(201).json(savedSubmission);
+
     } catch (err) {
-      customLogger(logger, 'error', "Error in creating a new submission", err);
-      if (err instanceof Sequelize.ValidationError) {
-          customLogger(logger, 'error', `Sequelize validation error: ${err.errors.map(e => e.message).join(', ')}`, err);
-          response.status(400).json({ error: "Bad request due to malformed request" });
-      } else {
-          response.status(500).json({ error: "Internal Server Error" });
-      }
+        customLogger(logger, 'error', "Error in creating a new submission", err);
+        if (err instanceof Sequelize.ValidationError) {
+            customLogger(logger, 'error', `Sequelize validation error: ${err.errors.map(e => e.message).join(', ')}`, err);
+            response.status(400).json({ error: "Bad request due to malformed request" });
+        } else {
+            response.status(500).json({ error: "Internal Server Error" });
+        }
     }
-  };
+};
+
   
