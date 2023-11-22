@@ -1,9 +1,10 @@
 import { Sequelize } from 'sequelize';
 import defineAssignment from '../models/assignment-models.js';
-//import sequelize from '../../sequelize.js';
+import defineSubmission from '../models/submission-models.js';
 import sequelize from '../utils/bootstrap.js';
 
 const Assignment = defineAssignment(sequelize);
+const Submission = defineSubmission(sequelize);
 
 export const getAll = async (params) => {
       try {
@@ -106,6 +107,39 @@ export async function getAllUsers() {
 
 }
 
+export const createSubmission = async (submissionData) => {
+  try {
+    const submission = await Submission.create(submissionData);
+    return submission;
+  } catch (error) {
+    console.error("Error while saving the submission:", error);
+    throw error;
+  }
+};
+
+export const countUserSubmissions = async (assignmentId) => {
+  try {
+      const count = await Submission.count({
+          where: {
+              assignmentId: assignmentId
+          }
+      });
+      return count;
+  } catch (error) {
+      console.error("Error while counting submissions for the assignment:", error);
+      throw error;
+  }
+};
+
+export const fetchAssignmentById = async (id) => {
+  try {
+      const assignment = await getAssignmentWithId(id);
+      return assignment;
+  } catch (error) {
+      console.error("Error in fetching assignment by ID:", error);
+      throw error;
+  }
+};
 
 
   

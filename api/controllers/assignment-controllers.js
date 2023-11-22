@@ -1,4 +1,4 @@
-import { getAll, getAssignmentWithId, saveAssignment , deleteAssignment ,updateAssignment ,getAllUsers } from '../services/assignment-services.js';
+import { getAll, fetchAssignmentById, countUserSubmissions, saveAssignment , deleteAssignment ,updateAssignment ,getAllUsers } from '../services/assignment-services.js';
 import Sequelize from 'sequelize';
 import moment from 'moment';
 import pino from 'pino';
@@ -81,30 +81,46 @@ export const getAllAssignments = async (request, response) => {
 
 // Method to get an assignment by ID
 
+// export const getAssignmentById = async (request, response) => {
+//   statsdClient.increment('api.calls.getAssignmentById');
+//     try {
+//         if (request.body && Object.keys(request.body).length > 0) {
+//             customLogger(logger, 'error', "Bad Request - Body content not allowed in GET request");
+//             return response.status(400).json({ error: "Bad Request - Body content not allowed in GET request" });
+//         }
+
+//         const id = request.params.id;
+//         const assignment = await getAssignmentWithId(id);
+
+//         if (assignment) {
+//             customLogger(logger, 'info', `Fetched assignment with ID: ${id}`);
+//             response.status(200).json({ message: assignment });
+//         } else {
+//             customLogger(logger, 'warn', `Assignment not found with ID: ${id}`);
+//             response.status(404).json({ error: "Assignment not found" });
+//         }
+//     } catch (err) {
+//         customLogger(logger, 'error', `Error fetching assignment with ID: ${request.params.id}`, err);
+//         response.status(500).json({ error: "Internal Server Error" });
+//     }
+// };
+
 export const getAssignmentById = async (request, response) => {
-  statsdClient.increment('api.calls.getAssignmentById');
-    try {
-        if (request.body && Object.keys(request.body).length > 0) {
-            customLogger(logger, 'error', "Bad Request - Body content not allowed in GET request");
-            return response.status(400).json({ error: "Bad Request - Body content not allowed in GET request" });
-        }
-
-        const id = request.params.id;
-        const assignment = await getAssignmentWithId(id);
-
-        if (assignment) {
-            customLogger(logger, 'info', `Fetched assignment with ID: ${id}`);
-            response.status(200).json({ message: assignment });
-        } else {
-            customLogger(logger, 'warn', `Assignment not found with ID: ${id}`);
-            response.status(404).json({ error: "Assignment not found" });
-        }
-    } catch (err) {
-        customLogger(logger, 'error', `Error fetching assignment with ID: ${request.params.id}`, err);
-        response.status(500).json({ error: "Internal Server Error" });
-    }
+  try {
+      const id = request.params.id;
+      const assignment = await fetchAssignmentById(id);
+      if (assignment) {
+          customLogger(logger, 'info', `Fetched assignment with ID: ${id}`);
+          response.status(200).json(assignment);
+      } else {
+          customLogger(logger, 'warn', `Assignment not found with ID: ${id}`);
+          response.status(404).json({ error: "Assignment not found" });
+      }
+  } catch (err) {
+      customLogger(logger, 'error', `Error fetching assignment with ID: ${id}`, err);
+      response.status(500).json({ error: "Internal Server Error" });
+  }
 };
-
 // Method to post an assignments
 export const postAssignment = async (request, response) => {
   statsdClient.increment('api.calls.postAssignment');
@@ -239,7 +255,7 @@ export const updateAssignmentById = async (request, response) => {
 
         if (updatedAssignment) {
             customLogger(logger, 'info', "Assignment updated successfully", { id, updatedData, UserId });
-            response.status(200).json({ message: updatedAssignment });
+            response.status(204).json({ message: updatedAssignment });
         }
     } catch (err) {
         customLogger(logger, 'error', "Error during assignment update", err);
@@ -266,3 +282,49 @@ export async function getUsers(req, res,next) {
     }
   
   }
+  export const postSubmission = async (request, response) => {
+    try {
+      const { assignmentId, submissionUrl } = request.body;
+  
+      // Fetch the assignment to check deadline and attempts
+      const assignment = await fetchAssignmentById(assignmentId);
+      if (!assignment) {
+          customLogger(logger, 'error', "Not Found - Assignment not found");
+          return response.status(404).json({ error: "Assignment not found" });
+      }
+  
+      // Check if the submission is within the due date
+      // Adjust moment to consider the end of the day for the deadline
+      if (moment().isAfter(moment(assignment.deadline).endOf('day'))) {
+          customLogger(logger, 'error', "Bad Request - Submission deadline has passed");
+          return response.status(400).json({ error: "Submission deadline has passed" });
+      }
+  
+      // Check if the user has attempts left
+      const submissionCount = await countUserSubmissions(assignmentId);
+      if (submissionCount >= assignment.num_of_attempts) {
+          customLogger(logger, 'error', "Bad Request - Maximum submission attempts exceeded");
+          return response.status(400).json({ error: "Maximum submission attempts exceeded" });
+      }
+  
+      // Create the submission
+      const newSubmission = {
+          assignmentId,
+          submissionUrl,
+      };
+  
+      const savedSubmission = await createSubmission(newSubmission);
+      customLogger(logger, 'info', "New submission created successfully");
+      response.status(201).json(savedSubmission);
+  
+    } catch (err) {
+      customLogger(logger, 'error', "Error in creating a new submission", err);
+      if (err instanceof Sequelize.ValidationError) {
+          customLogger(logger, 'error', `Sequelize validation error: ${err.errors.map(e => e.message).join(', ')}`, err);
+          response.status(400).json({ error: "Bad request due to malformed request" });
+      } else {
+          response.status(500).json({ error: "Internal Server Error" });
+      }
+    }
+  };
+  

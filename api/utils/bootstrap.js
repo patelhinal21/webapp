@@ -5,6 +5,7 @@ import { Sequelize } from 'sequelize';
 import mysql from 'mysql2/promise';
 import defineUser from '../models/users-models.js';
 import defineAssignment from '../models/assignment-models.js'; 
+import defineSubmission from '../models/submission-models.js';
 import dotenv from 'dotenv';
 import pino from 'pino';
 //import logger from '../../logger.js';
@@ -61,9 +62,11 @@ try {
 
 const Users = defineUser(sequelize);
 const Assignment = defineAssignment(sequelize);
+const Submission = defineSubmission(sequelize);
 
 Users.hasMany(Assignment);
 Assignment.belongsTo(Users);
+//Assignment.hasMany(Submission);
 
 await sequelize
 .sync({force : false})

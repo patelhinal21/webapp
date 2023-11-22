@@ -109,5 +109,12 @@ router
         customLogger(logger, 'error', 'Method not allowed', new Error('Method Not Allowed'));
         res.status(405).send('Method Not Allowed');
     });
+    
+    router.route("/v1/assignments/:id/submission")
+    .post(assignmentController.postSubmission)
+    .all((req, res) => { // Catch-all for non-POST methods
+        customLogger(logger, 'error', 'Method not allowed', new Error('Method Not Allowed'));
+        res.status(405).send('Method Not Allowed');
+    });
 
 export default router;
