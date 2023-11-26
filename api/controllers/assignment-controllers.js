@@ -1,4 +1,4 @@
-import { getAll, fetchAssignmentById, countUserSubmissions, createSubmission, saveAssignment , deleteAssignment ,updateAssignment ,getAllUsers } from '../services/assignment-services.js';
+import { getAll, fetchAssignmentById, countUserSubmissions, createSubmission, saveAssignment , deleteAssignment ,updateAssignment ,getAllUsers, fetchSubmissionsByAssignmentId,deleteSubmissionById} from '../services/assignment-services.js';
 import Sequelize from 'sequelize';
 import moment from 'moment';
 import pino from 'pino';
@@ -187,29 +187,30 @@ export const postAssignment = async (request, response) => {
   export const deleteAssignmentById = async (request, response) => {
     statsdClient.increment('api.calls.deleteAssignmentById');
     try {
-        // Check if request body is empty
-        if (request.body && Object.keys(request.body).length > 0) {
-            customLogger(logger, 'error', "Bad Request - Body content not allowed in DELETE request");
-            return response.status(400).json({ error: "Bad Request - Body content not allowed in DELETE request" });
-        }
-
         const id = request.params.id;
-        const UserId = request.user.id; // Ensure this is being set through your authentication middleware
+        const UserId = request.user.id; // Authentication logic
+  
+        // Fetch and delete submissions related to the assignment
+        const submissions = await fetchSubmissionsByAssignmentId(id);
+        for (const submission of submissions) {
+            await deleteSubmissionById(submission.id);
+        }
+  
+        // Delete the assignment
         const isDeleted = await deleteAssignment(id, UserId);
-
         if (isDeleted) {
-            customLogger(logger, 'info', `Assignment with id ${id} deleted successfully by user ${UserId}`);
-            return response.status(204).send(); // No content to send back
+            customLogger(logger, 'info', `Assignment and its submissions with id ${id} deleted successfully`);
+            return response.status(204).send();
         } else {
             customLogger(logger, 'error', `User with id ${UserId} is not authorized to delete assignment with id ${id}`);
             return response.status(403).send("User is not authorized to delete this assignment");
         }
     } catch (err) {
-        customLogger(logger, 'error', "Error during assignment deletion", err);
+        customLogger(logger, 'error', "Error during assignment and submissions deletion", err);
         return response.status(500).send("Internal Server Error");
     }
-};
-
+  };
+  
 // Method to update an assignment
 export const updateAssignmentById = async (request, response) => {
   statsdClient.increment('api.calls.updateAssignmentById');
@@ -330,21 +331,24 @@ export async function getUsers(req, res,next) {
 
         // SNS Configuration and Sending Notification
         AWS.config.update({
-          accessKeyId: process.env.ACCESSKEY,
-          secretAccessKey: process.env.SECRETACCESSKEY,
+          // accessKeyId: process.env.ACCESSKEY,
+          // secretAccessKey: process.env.SECRETACCESSKEY,
           region: 'us-east-1'
         });
 
         const resSubmission = {
           email: request.user.email,
           submissionUrl: savedSubmission.submissionUrl,
+          submissionId : savedSubmission.id
+
       };
 
         const sns = new AWS.SNS();
         const sendSubmissionNotification = async (submissionDetails) => {
           const message = {
             email: submissionDetails.email,
-            submissionUrl: submissionDetails.submissionUrl
+            submissionUrl: submissionDetails.submissionUrl,
+            submissionId : submissionDetails.id
           };
 
           const params = {
