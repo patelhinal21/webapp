@@ -141,5 +141,36 @@ export const fetchAssignmentById = async (id) => {
   }
 };
 
+export const fetchSubmissionsByAssignmentId = async (assignmentId) => {
+  try {
+      const submissions = await Submission.findAll({
+          where: {
+              assignmentId: assignmentId
+          }
+      });
+      return submissions;
+  } catch (error) {
+      console.error("Error while fetching submissions by assignment ID:", error);
+      throw error;
+  }
+};
 
-  
+
+export const deleteSubmissionById = async (submissionId) => {
+  try {
+      const deletedRows = await Submission.destroy({
+          where: {
+              id: submissionId
+          }
+      });
+      if (deletedRows === 0) {
+          console.log('No submission found with the given ID');
+          return false;
+      }
+      console.log('Submission deleted successfully');
+      return true;
+  } catch (error) {
+      console.error('Error during the submission deletion:', error);
+      throw error;
+  }
+};
