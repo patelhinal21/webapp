@@ -2,8 +2,7 @@ import express from 'express';
 import * as helperFunc from '../middleware/helper.js';
 import * as assignmentController from '../controllers/assignment-controllers.js';
 import pino from 'pino';
-//import logger from '../../logger.js'
-import path from 'path'; // Import path to resolve file paths
+import path from 'path'; 
 
 const router = express.Router();
 const app = express();
@@ -110,7 +109,7 @@ router
         res.status(405).send('Method Not Allowed');
     });
     
-    router.route("/v1/assignments/:id/submission")
+    router.route("/v1/assignments/:assignmentId/submission")
     .post(assignmentController.postSubmission)
     .all((req, res) => { // Catch-all for non-POST methods
         customLogger(logger, 'error', 'Method not allowed', new Error('Method Not Allowed'));

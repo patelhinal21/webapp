@@ -4,6 +4,7 @@ import moment from 'moment';
 import pino from 'pino';
 import path from 'path'; 
 import { StatsD } from 'node-statsd';
+import AWS from 'aws-sdk';
 
 
 const statsdClient = new StatsD({
@@ -287,17 +288,22 @@ export async function getUsers(req, res,next) {
  
   export const postSubmission = async (request, response) => {
     try {
-        const { assignmentId, submissionUrl } = request.body;
+      // Extracting assignmentId from the URL
+      const { assignmentId } = request.params;
 
-        // Fetch the assignment to check deadline and attempts
-        const assignment = await fetchAssignmentById(assignmentId);
-        if (!assignment) {
-            customLogger(logger, 'error', "Not Found - Assignment not found");
-            return response.status(404).json({ error: "Assignment not found" });
-        }
+      // Extracting submissionUrl from the request body
+      const { submissionUrl } = request.body;
+
+      const email = request.user.email; // Assuming user ID is available from the request context
+
+      // Fetch the assignment to check deadline and attempts
+      const assignment = await fetchAssignmentById(assignmentId);
+      if (!assignment) {
+          customLogger(logger, 'error', "Not Found - Assignment not found");
+          return response.status(404).json({ error: "Assignment not found" });
+      }
 
         // Check if the submission is within the due date
-        // Adjust moment to consider the end of the day for the deadline
         if (moment().isAfter(moment(assignment.deadline).endOf('day'))) {
             customLogger(logger, 'error', "Bad Request - Submission deadline has passed");
             return response.status(400).json({ error: "Submission deadline has passed" });
@@ -314,11 +320,50 @@ export async function getUsers(req, res,next) {
         const newSubmission = {
             assignmentId,
             submissionUrl,
+            email,
+           
         };
 
         const savedSubmission = await createSubmission(newSubmission);
         customLogger(logger, 'info', "New submission created successfully");
         response.status(201).json(savedSubmission);
+
+        // SNS Configuration and Sending Notification
+        AWS.config.update({
+          accessKeyId: process.env.ACCESSKEY,
+          secretAccessKey: process.env.SECRETACCESSKEY,
+          region: 'us-east-1'
+        });
+
+        const resSubmission = {
+          email: request.user.email,
+          submissionUrl: savedSubmission.submissionUrl,
+      };
+
+        const sns = new AWS.SNS();
+        const sendSubmissionNotification = async (submissionDetails) => {
+          const message = {
+            email: submissionDetails.email,
+            submissionUrl: submissionDetails.submissionUrl
+          };
+
+          const params = {
+            Message: JSON.stringify(message),
+            TopicArn: process.env.TOPICARN
+          };
+          try {
+            await sns.publish(params).promise();
+            console.log('Submission notification sent');
+          } catch (error) {
+            console.error('Error sending submission notification:', error);
+          }
+        };
+
+        sendSubmissionNotification(resSubmission).then(() => {
+          logger.info('Submission notification sent via SNS');
+
+        }); // Await the notification sending
+
 
     } catch (err) {
         customLogger(logger, 'error', "Error in creating a new submission", err);
