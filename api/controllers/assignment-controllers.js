@@ -1,11 +1,10 @@
 import { getAll, fetchAssignmentById, countUserSubmissions, createSubmission, saveAssignment , deleteAssignment ,updateAssignment ,getAllUsers, fetchSubmissionsByAssignmentId,deleteSubmissionById} from '../services/assignment-services.js';
 import Sequelize from 'sequelize';
-import moment from 'moment';
 import pino from 'pino';
 import path from 'path'; 
 import { StatsD } from 'node-statsd';
 import AWS from 'aws-sdk';
-
+import moment from 'moment-timezone';
 
 const statsdClient = new StatsD({
   host: 'localhost', // or wherever your StatsD server is located
@@ -158,14 +157,14 @@ export const postAssignment = async (request, response) => {
         customLogger(logger, 'error', "Bad Request - Number of Attempts should be an integer");
         return response.status(400).json({ error: "Bad Request - Number of Attempts should be an integer" });
       }
-      const adjustedDeadline = moment(requestBody.deadline).utc().add(1, 'days').startOf('day').toISOString();
+      //const adjustedDeadline = moment(requestBody.deadline).utc().add(1, 'days').startOf('day').toISOString();
 
     
       const newAssignment = {
         name: requestBody.name,
         points: requestBody.points,
         num_of_attempts: requestBody.num_of_attempts,
-        deadline: adjustedDeadline,
+        deadline: requestBody.deadline,
         UserId: request.user.id // Ensure this is set correctly based on your authentication logic
       };
   
@@ -304,12 +303,13 @@ export async function getUsers(req, res,next) {
           return response.status(404).json({ error: "Assignment not found" });
       }
 
-        // Check if the submission is within the due date
-        if (moment().isAfter(moment(assignment.deadline).endOf('day'))) {
-            customLogger(logger, 'error', "Bad Request - Submission deadline has passed");
-            return response.status(400).json({ error: "Submission deadline has passed" });
-        }
+      const currentTime = moment().tz('UTC');
+      const deadlineDateTime = moment(assignment.deadline).tz('UTC').endOf('day');
 
+      if (currentTime.isAfter(deadlineDateTime)) {
+          customLogger(logger, 'error', "Bad Request - Submission deadline has passed");
+          return response.status(400).json({ error: "Submission deadline has passed" });
+      }
         // Check if the user has attempts left
         const submissionCount = await countUserSubmissions(assignmentId);
         if (submissionCount >= assignment.num_of_attempts) {
