@@ -1,4 +1,4 @@
-import { getAll, fetchAssignmentById, countUserSubmissions, createSubmission, saveAssignment , deleteAssignment ,updateAssignment ,getAllUsers, fetchSubmissionsByAssignmentId,deleteSubmissionById} from '../services/assignment-services.js';
+import { getAll, getAssignmentWithId, fetchAssignmentById, countUserSubmissions, createSubmission, saveAssignment , deleteAssignment ,updateAssignment ,getAllUsers, fetchSubmissionsByAssignmentId,deleteSubmissionById} from '../services/assignment-services.js';
 import Sequelize from 'sequelize';
 import pino from 'pino';
 import path from 'path'; 
@@ -188,27 +188,35 @@ export const postAssignment = async (request, response) => {
     try {
         const id = request.params.id;
         const UserId = request.user.id; // Authentication logic
-  
+
+        // First, check if the user is authorized to delete the assignment
+        const assignment = await getAssignmentWithId(id);
+        if (!assignment) {
+            return response.status(404).send("Assignment not found");
+        }
+
+        if (assignment.UserId !== UserId) {
+            customLogger(logger, 'error', `User with id ${UserId} is not authorized to delete assignment with id ${id}`);
+            return response.status(403).send("User is not authorized to delete this assignment");
+        }
+
         // Fetch and delete submissions related to the assignment
         const submissions = await fetchSubmissionsByAssignmentId(id);
         for (const submission of submissions) {
             await deleteSubmissionById(submission.id);
         }
-  
-        // Delete the assignment
-        const isDeleted = await deleteAssignment(id, UserId);
-        if (isDeleted) {
-            customLogger(logger, 'info', `Assignment and its submissions with id ${id} deleted successfully`);
-            return response.status(204).send();
-        } else {
-            customLogger(logger, 'error', `User with id ${UserId} is not authorized to delete assignment with id ${id}`);
-            return response.status(403).send("User is not authorized to delete this assignment");
-        }
+
+        // Now, delete the assignment
+        await deleteAssignment(id, UserId);
+        customLogger(logger, 'info', `Assignment and its submissions with id ${id} deleted successfully`);
+        return response.status(204).send();
     } catch (err) {
         customLogger(logger, 'error', "Error during assignment and submissions deletion", err);
         return response.status(500).send("Internal Server Error");
     }
-  };
+};
+
+
   
 // Method to update an assignment
 export const updateAssignmentById = async (request, response) => {
