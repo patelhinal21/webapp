@@ -288,13 +288,14 @@ export async function getUsers(req, res,next) {
  
   export const postSubmission = async (request, response) => {
     try {
-      // Extracting assignmentId from the URL
+    
       const { assignmentId } = request.params;
 
-      // Extracting submissionUrl from the request body
+  
       const { submissionUrl } = request.body;
 
-      const email = request.user.email; // Assuming user ID is available from the request context
+      const email = request.user.email; 
+      const userId = request.user.id; 
 
       // Fetch the assignment to check deadline and attempts
       const assignment = await fetchAssignmentById(assignmentId);
@@ -310,8 +311,14 @@ export async function getUsers(req, res,next) {
           customLogger(logger, 'error', "Bad Request - Submission deadline has passed");
           return response.status(400).json({ error: "Submission deadline has passed" });
       }
-        // Check if the user has attempts left
-        const submissionCount = await countUserSubmissions(assignmentId);
+
+      const zipUrlRegex = /\.zip$/;
+      if (!zipUrlRegex.test(submissionUrl)) {
+          customLogger(logger, 'error', "Bad Request - URL is invalid, must end with .zip");
+          return response.status(400).json({ error: "Bad Request - URL is invalid, must end with .zip" });
+      }
+      
+      const submissionCount = await countUserSubmissions(assignmentId, userId); // Updated to include userId
         if (submissionCount >= assignment.num_of_attempts) {
             customLogger(logger, 'error', "Bad Request - Maximum submission attempts exceeded");
             return response.status(400).json({ error: "Maximum submission attempts exceeded" });
@@ -321,6 +328,7 @@ export async function getUsers(req, res,next) {
         const newSubmission = {
             assignmentId,
             submissionUrl,
+            userId, 
             email,
            
         };
@@ -331,15 +339,17 @@ export async function getUsers(req, res,next) {
 
         // SNS Configuration and Sending Notification
         AWS.config.update({
-          // accessKeyId: process.env.ACCESSKEY,
-          // secretAccessKey: process.env.SECRETACCESSKEY,
+  
           region: 'us-east-1'
         });
 
         const resSubmission = {
           email: request.user.email,
           submissionUrl: savedSubmission.submissionUrl,
-          submissionId : savedSubmission.id
+          submissionId: savedSubmission.id,
+          assignmentId: assignment.id, // Include assignment ID
+          numOfAttempts: assignment.num_of_attempts, // Include number of attempts
+          deadline: assignment.deadline // Include deadline
 
       };
 
@@ -348,7 +358,10 @@ export async function getUsers(req, res,next) {
           const message = {
             email: submissionDetails.email,
             submissionUrl: submissionDetails.submissionUrl,
-            submissionId : submissionDetails.id
+            submissionId: submissionDetails.submissionId,
+            assignmentId: submissionDetails.assignmentId, // Pass assignment ID
+            numOfAttempts: submissionDetails.numOfAttempts, // Pass number of attempts
+            deadline: submissionDetails.deadline // Pass deadline
           };
 
           const params = {

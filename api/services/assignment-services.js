@@ -117,19 +117,21 @@ export const createSubmission = async (submissionData) => {
   }
 };
 
-export const countUserSubmissions = async (assignmentId) => {
+export const countUserSubmissions = async (assignmentId, userId) => {
   try {
       const count = await Submission.count({
           where: {
-              assignmentId: assignmentId
+              assignmentId: assignmentId,
+              userId: userId  
           }
       });
       return count;
   } catch (error) {
-      console.error("Error while counting submissions for the assignment:", error);
+      console.error("Error while counting submissions for the assignment and user:", error);
       throw error;
   }
 };
+
 
 export const fetchAssignmentById = async (id) => {
   try {
