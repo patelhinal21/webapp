@@ -19,7 +19,14 @@ const defineSubmission = (sequelize) => {
       type: DataTypes.STRING,
       allowNull: false
     },
-    
+    userId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'Users', 
+        key: 'id'
+      }
+    },
   }, {
     timestamps: true,
     createdAt: 'submission_date', 
