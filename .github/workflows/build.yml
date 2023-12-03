@@ -71,11 +71,6 @@ jobs:
       # Instance Refresh for the Autoscaling Group
       - name: Instance Refresh
         run: |
-          #aws autoscaling start-instance-refresh --auto-scaling-group-name csyeA10AutoScalingGroup
-          aws autoscaling start-instance-refresh
-            —-auto-scaling-group-name csyeA10AutoScalingGroup
-            -strategy Rolling
-            —preferences "("MinHealthyPercentage": 50,
-            "Instancellarmup":
-            60}"
-    
+          aws autoscaling start-instance-refresh --auto-scaling-group-name csyeA10AutoScalingGroup --strategy Rolling --preferences '{"MinHealthyPercentage": 50, "InstanceWarmup": 60}'
+   
+   
