@@ -68,16 +68,13 @@ jobs:
           latest_version=$(aws ec2 describe-launch-template-versions --launch-template-name csyeA10LaunchTemplate --query 'LaunchTemplateVersions[-1].VersionNumber' --output text)
           aws ec2 create-launch-template-version --launch-template-name csyeA10LaunchTemplate --source-version $latest_version --launch-template-data "{\"ImageId\":\"${{ env.AMI_ID}}\"}"
 
-
-      # Update Autoscaling Group with the new Launch Template version
-      - name: Update Autoscaling Group
-        run: |
-          latest_version=$(aws ec2 describe-launch-template-versions --launch-template-name csyeA10LaunchTemplate --query 'LaunchTemplateVersions[-1].VersionNumber' --output text)
-          aws autoscaling update-auto-scaling-group --auto-scaling-group-name csyeA10AutoScalingGroup --launch-template "LaunchTemplateName=csyeA10LaunchTemplate,Version=$latest_version"
-
-
-
       # Instance Refresh for the Autoscaling Group
       - name: Instance Refresh
         run: |
-          aws autoscaling start-instance-refresh --auto-scaling-group-name csyeA10AutoScalingGroup
+          aws autoscaling start-instance-refresh
+            —auto-scaling-group-name csyeA10AutoScalingGroup
+            -strategy Rolling
+            —preferences "("MinHealthyPercentage": 50,
+            "Instancellarmup":
+            60}"
+    
