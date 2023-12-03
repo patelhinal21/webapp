@@ -1,9 +1,10 @@
 name: CI/CD Pipeline On PR Merged
 
 on:
-    push:
-        branches:
-          - main
+   [pull_request]
+    # push:
+    #     branches:
+    #       - main
 
 jobs:
   test-and-package:
@@ -18,17 +19,6 @@ jobs:
         with:
           node-version: '18.x'
 
-      # - name: Create Environment File
-      #   run: |
-      #     touch .env
-      #     echo "DB_PASSWORD=${{secrets.DB_PASSWORD}}" >> .env
-      #     echo "DB_NAME=${{secrets.DB_NAME}}" >> .env
-      #     echo "DB_USERNAME=${{secrets.DB_USERNAME}}" >> .env
-      #     echo "DB_PORT=${{secrets.DB_PORT}}" >> .env
-      #     echo "DB_HOST=${{secrets.DB_HOST}}" >> .env
-      #     echo "DB_DIALECT=${{secrets.DIALECT}}" >> .env
-      #     echo "DEFAULTUSERPATH=${{secrets.DEFAULTUSERPATH}}" >> .env
-
       - name: Create user.csv
         run: |
           touch user.csv
@@ -40,7 +30,7 @@ jobs:
       - name: list files
         run: ls -al
         
-      - name: Configure AWS credentials
+      - name: Configure AWS credentials dev
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.ACCESS_KEY }}   
@@ -59,5 +49,22 @@ jobs:
           PKR_VAR_aws_region: "${{secrets.AWS_REGION}}"
           PKR_VAR_source_ami: "${{secrets.SOURCE_AMI}}"
           PKR_VAR_subnet_id: "${{secrets.SUBNET_ID}}"
-        
+
+      - name: Fetch latest AMI ID
+        id: fetch_ami
+        run: |
+          AMI_ID=$(aws ec2 describe-images --owners self --filters "Name=tag:YourTagName,Values=YourTagValue" --query 'Images | sort_by(@, &CreationDate) | [-1].ImageId' --output text)
+          echo "Latest AMI ID: $AMI_ID"
+          echo "::set-output name=AMI_ID::$AMI_ID"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.SECRET_ACCESS_KEY }}
+          AWS_REGION: us-east-1
+      
+      # - name: Configure AWS credentials demo
+      #   uses: aws-actions/configure-aws-credentials@v1
+      #   with:
+      #     aws-access-key-id: ${{ secrets.ACCESS_KEY_DEMO }}   
+      #     aws-secret-access-key: ${{ secrets.SECRET_ACCESS_KEY_DEMO }}
+      #     aws-region: us-east-1
     
