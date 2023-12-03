@@ -41,7 +41,11 @@ jobs:
         run: packer init webapp.pkr.hcl
         
       - name: Build AMI with Packer
-        run: packer build webapp.pkr.hcl
+        run: |
+            PACKER_OUTPUT=$(packer build webapp.pkr.hcl)
+            AMI_ID=$(echo "$PACKER_OUTPUT" | grep -oP 'AMI: \K(ami-[a-zA-Z0-9]+)')
+            echo "AMI_ID=$AMI_ID" >> $GITHUB_ENV
+            echo "::set-output name=ami_id::$AMI_ID"
         env:
           PKR_VAR_database_pass: ${{secrets.DB_PASSWORD}} 
           PKR_VAR_database_user: ${{secrets.DB_USERNAME}}
@@ -50,16 +54,6 @@ jobs:
           PKR_VAR_source_ami: "${{secrets.SOURCE_AMI}}"
           PKR_VAR_subnet_id: "${{secrets.SUBNET_ID}}"
 
-      - name: Fetch latest AMI ID
-        id: fetch_ami
-        run: |
-          AMI_ID=$(aws ec2 describe-images --owners self --filters "Name=tag:YourTagName,Values=YourTagValue" --query 'Images | sort_by(@, &CreationDate) | [-1].ImageId' --output text)
-          echo "Latest AMI ID: $AMI_ID"
-          echo "::set-output name=AMI_ID::$AMI_ID"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.SECRET_ACCESS_KEY }}
-          AWS_REGION: us-east-1
       
       # - name: Configure AWS credentials demo
       #   uses: aws-actions/configure-aws-credentials@v1
