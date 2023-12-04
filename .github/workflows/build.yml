@@ -67,9 +67,25 @@ jobs:
           latest_version=$(aws ec2 describe-launch-template-versions --launch-template-name csyeA10LaunchTemplate --query 'LaunchTemplateVersions[-1].VersionNumber' --output text)
           aws ec2 create-launch-template-version --launch-template-name csyeA10LaunchTemplate --source-version $latest_version --launch-template-data "{\"ImageId\":\"${{ env.AMI_ID}}\"}"
 
-      # Instance Refresh for the Autoscaling Group
+      #instance refresh
       - name: Instance Refresh
+        if: env.TEMPLATE_EXISTS == 'true'
         run: |
-          aws autoscaling start-instance-refresh --auto-scaling-group-name csyeA10AutoScalingGroup --strategy Rolling --preferences '{"MinHealthyPercentage": 50, "InstanceWarmup": 60}'
-   
+          aws autoscaling start-instance-refresh \
+            --auto-scaling-group-name csyeA10AutoScalingGroup \
+            --strategy Rolling \
+            --preferences '{"MinHealthyPercentage": 50, "InstanceWarmup": 60}'
+
+          # Loop to wait for instance refresh to complete
+          while : ; do
+            STATUS=$(aws autoscaling describe-instance-refreshes --auto-scaling-group-name csyeA10AutoScalingGroup --query 'InstanceRefreshes[0].Status' --output text)
+            if [[ "$STATUS" == "Successful" || "$STATUS" == "Failed" || "$STATUS" == "Cancelled" ]]; then
+              echo "Instance refresh completed with status: $STATUS"
+              break
+            fi
+            echo "Waiting for instance refresh to complete..."
+            sleep 60 # Wait for 60 seconds before checking again
+          done
+
+      
    
