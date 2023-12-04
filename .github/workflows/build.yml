@@ -1,10 +1,9 @@
 name: CI/CD Pipeline On PR Merged
 
 on:
-   [pull_request]
-    # push:
-    #     branches:
-    #       - main
+    push:
+        branches:
+          - main
 
 jobs:
   test-and-package:
