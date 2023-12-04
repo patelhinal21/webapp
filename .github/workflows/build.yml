@@ -69,7 +69,6 @@ jobs:
 
       #instance refresh
       - name: Instance Refresh
-        if: env.TEMPLATE_EXISTS == 'true'
         run: |
           aws autoscaling start-instance-refresh \
             --auto-scaling-group-name csyeA10AutoScalingGroup \
