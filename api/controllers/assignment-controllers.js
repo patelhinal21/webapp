@@ -296,37 +296,33 @@ export async function getUsers(req, res,next) {
  
   export const postSubmission = async (request, response) => {
     try {
-    
-      const { assignmentId } = request.params;
+        const { assignmentId } = request.params;
+        const { submissionUrl } = request.body;
+        const email = request.user.email; 
+        const userId = request.user.id; 
 
-  
-      const { submissionUrl } = request.body;
+        // Fetch the assignment to check deadline and attempts
+        const assignment = await fetchAssignmentById(assignmentId);
+        if (!assignment) {
+            customLogger(logger, 'error', "Not Found - Assignment not found");
+            return response.status(404).json({ error: "Assignment not found" });
+        }
 
-      const email = request.user.email; 
-      const userId = request.user.id; 
+        const currentTime = moment().tz('America/New_York'); // Current time in EST
+        const deadlineDateTime = moment(assignment.deadline).tz('America/New_York').endOf('day'); // Deadline time in EST
 
-      // Fetch the assignment to check deadline and attempts
-      const assignment = await fetchAssignmentById(assignmentId);
-      if (!assignment) {
-          customLogger(logger, 'error', "Not Found - Assignment not found");
-          return response.status(404).json({ error: "Assignment not found" });
-      }
+        if (currentTime.isAfter(deadlineDateTime)) {
+            customLogger(logger, 'error', "Bad Request - Submission deadline has passed");
+            return response.status(400).json({ error: "Submission deadline has passed" });
+        }
 
-      const currentTime = moment().tz('UTC');
-      const deadlineDateTime = moment(assignment.deadline).tz('UTC').endOf('day');
-
-      if (currentTime.isAfter(deadlineDateTime)) {
-          customLogger(logger, 'error', "Bad Request - Submission deadline has passed");
-          return response.status(400).json({ error: "Submission deadline has passed" });
-      }
-
-      const zipUrlRegex = /\.zip$/;
-      if (!zipUrlRegex.test(submissionUrl)) {
-          customLogger(logger, 'error', "Bad Request - URL is invalid, must end with .zip");
-          return response.status(400).json({ error: "Bad Request - URL is invalid, must end with .zip" });
-      }
+        const zipUrlRegex = /\.zip$/;
+        if (!zipUrlRegex.test(submissionUrl)) {
+            customLogger(logger, 'error', "Bad Request - URL is invalid, must end with .zip");
+            return response.status(400).json({ error: "Bad Request - URL is invalid, must end with .zip" });
+        }
       
-      const submissionCount = await countUserSubmissions(assignmentId, userId); // Updated to include userId
+        const submissionCount = await countUserSubmissions(assignmentId, userId); 
         if (submissionCount >= assignment.num_of_attempts) {
             customLogger(logger, 'error', "Bad Request - Maximum submission attempts exceeded");
             return response.status(400).json({ error: "Maximum submission attempts exceeded" });
@@ -338,7 +334,6 @@ export async function getUsers(req, res,next) {
             submissionUrl,
             userId, 
             email,
-           
         };
 
         const savedSubmission = await createSubmission(newSubmission);
@@ -346,19 +341,15 @@ export async function getUsers(req, res,next) {
         response.status(201).json(savedSubmission);
 
         // SNS Configuration and Sending Notification
-        AWS.config.update({
-  
-          region: 'us-east-1'
-        });
+        AWS.config.update({ region: 'us-east-1' });
 
         const resSubmission = {
           email: request.user.email,
           submissionUrl: savedSubmission.submissionUrl,
           submissionId: savedSubmission.id,
-          assignmentId: assignment.id, // Include assignment ID
-          numOfAttempts: assignment.num_of_attempts, // Include number of attempts
-          deadline: assignment.deadline // Include deadline
-
+          assignmentId: assignment.id, 
+          numOfAttempts: assignment.num_of_attempts,
+          deadline: assignment.deadline
       };
 
         const sns = new AWS.SNS();
@@ -367,9 +358,9 @@ export async function getUsers(req, res,next) {
             email: submissionDetails.email,
             submissionUrl: submissionDetails.submissionUrl,
             submissionId: submissionDetails.submissionId,
-            assignmentId: submissionDetails.assignmentId, // Pass assignment ID
-            numOfAttempts: submissionDetails.numOfAttempts, // Pass number of attempts
-            deadline: submissionDetails.deadline // Pass deadline
+            assignmentId: submissionDetails.assignmentId,
+            numOfAttempts: submissionDetails.numOfAttempts,
+            deadline: submissionDetails.deadline
           };
 
           const params = {
@@ -386,9 +377,7 @@ export async function getUsers(req, res,next) {
 
         sendSubmissionNotification(resSubmission).then(() => {
           logger.info('Submission notification sent via SNS');
-
-        }); // Await the notification sending
-
+        });
 
     } catch (err) {
         customLogger(logger, 'error', "Error in creating a new submission", err);
@@ -400,5 +389,6 @@ export async function getUsers(req, res,next) {
         }
     }
 };
+
 
   
