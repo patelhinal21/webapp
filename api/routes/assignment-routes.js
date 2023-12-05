@@ -91,7 +91,7 @@ function customLogger(logger, level, message, error) {
     next();
 });
 
-router.route("/v2/assignments")
+router.route("/demo/assignments")
     .get(assignmentController.getAllAssignments)
     .post(assignmentController.postAssignment)
     .patch((req, res) => {
@@ -100,7 +100,7 @@ router.route("/v2/assignments")
     });
 
 router
-    .route("/v2/assignments/:id")
+    .route("/demo/assignments/:id")
     .get(assignmentController.getAssignmentById)
     .delete(assignmentController.deleteAssignmentById)
     .put(assignmentController.updateAssignmentById)
@@ -109,7 +109,7 @@ router
         res.status(405).send('Method Not Allowed');
     });
     
-    router.route("/v2/assignments/:assignmentId/submission")
+    router.route("/demo/assignments/:assignmentId/submission")
     .post(assignmentController.postSubmission)
     .all((req, res) => { // Catch-all for non-POST methods
         customLogger(logger, 'error', 'Method not allowed', new Error('Method Not Allowed'));
